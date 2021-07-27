@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77fd136edd607a448b25b04aa586ac30, type: 3}
+  m_Name: Police
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 108018, guid: 47a3741b253f088469eedd6d403dd89a, type: 2}
+  baseSpeed: 1
+  maxSpeed: 1.5
+  minSpeed: 0.5
+  accel: 0.1
+  maxSpeedVariation: {x: -0.5, y: 0.5}
+  reactionTime: {x: 0.55, y: 0.7}
+  skin: {fileID: 0}
+  speedToChair: {x: 3, y: 6}
+  pushChance: 0
+  jumpChance: 100
+  characterImage: {fileID: 21300000, guid: 2c524e93c6fcc284f91c5bc30995a098, type: 3}
