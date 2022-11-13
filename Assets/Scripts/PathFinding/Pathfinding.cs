@@ -12,7 +12,7 @@ public class Pathfinding : MonoBehaviour
     
     public void Check()
     {
-        path = GetPath(origin.position, target, GameManager.instance.waypoints);
+        path = GetPath(origin.position, target, GameManager.instance.waypoints);      
     }
     //return side...
     public static int GetShortestPath(int current, int target, int count)

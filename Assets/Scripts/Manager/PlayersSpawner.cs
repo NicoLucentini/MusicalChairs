@@ -10,27 +10,17 @@ public class PlayersSpawner : MonoBehaviour {
 
 
     public List<EntitySettings> charactersSettings;
-    public List<GameObject> charactersPrefab;
 
     public List<EntitySettings> survivors = new List<EntitySettings>();
-    public EntitySettings GetRandomSetting()
-    {
-        return charactersSettings[Random.Range(0, charactersSettings.Count)];
-    }
 
-    public GameObject GetRandomPrefab()
-    {
-        return charactersPrefab[Random.Range(0, charactersPrefab.Count)];
-    }
+    
 
     public int amountChairs = 0;
     public int freq = 1;
   
     public void SpawnAll(Elipse e, float size = 1)
     {
-      
         amountChairs = GameManager.instance.chairs.Count + 1;
-
         StartCoroutine(StartSpawning(e, amountChairs, size));
     }
 
@@ -63,9 +53,9 @@ public class PlayersSpawner : MonoBehaviour {
 
 
                 Character ch = go.GetComponent<Character>();
+                
                 ch.CreateVisual(GameManager.instance.player.prefab);
                 GameManager.instance.uiController.SetCharacter(ch);
-
             }
             //Creo la ia
             else
@@ -80,7 +70,7 @@ public class PlayersSpawner : MonoBehaviour {
               
                 if (survCount == 0)
                 {
-                    ch.CreateVisual(GetRandomSetting().prefab);
+                    ch.CreateVisual(charactersSettings.Random().prefab);                    
                 }
                 else
                 {

@@ -89,7 +89,6 @@ public class UIItemBackground : MonoBehaviour
         else
         {
             Menu.instance.ShowBlocker(true, "No tienes suficientes monedas");
-            Debug.Log("No hay plata");
         }
     }
 
