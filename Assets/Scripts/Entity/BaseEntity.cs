@@ -143,9 +143,12 @@ public class BaseEntity : MonoBehaviour, ISitable
                 StartCoroutine(CTTime(5, () => { canFallWithBanana = true; }));
             }
         }
-    }
-    void ApplySettings()
+    } 
+    
+    public void ApplySettings(EntitySettings settings)
     {
+        this.settings = settings;
+        useSettings = true;
         if (!useSettings) return;
         if (settings == null) return;
 
@@ -159,6 +162,9 @@ public class BaseEntity : MonoBehaviour, ISitable
         //speedToChair = settings.speedToChair;
         pushChance = settings.pushChance;
         jumpChance = settings.jumpChance;
+        
+        GameObject go = GameObject.Instantiate(settings.prefab, transform);
+        anim = go.GetComponent<Animation>();
     }
 
 
@@ -188,32 +194,22 @@ public class BaseEntity : MonoBehaviour, ISitable
         else
         {
             baseVisual.SetActive(false);
-            ApplySettings();
-            GameObject go = GameObject.Instantiate(settings.prefab, transform);
-            anim = go.GetComponent<Animation>();
-
             float variation = Random.Range(maxSpeedVariation.x, maxSpeedVariation.y);
             speed = baseSpeed + variation;
             speed = Mathf.Clamp(speed, minSpeed, maxSpeed);
         }
 
         myCollider = GetComponentInChildren<Collider>();
-        // agent = GetComponent<NavMeshAgent>();
-        //agent.enabled = false;
-        anim["walk"].speed = speed;
-        //Invoke("CheckDistance", Random.Range(2, 5));
-
-
+      
         DoInTime(Random.Range(2, 5), () => { hasAttacked = false; });
 
         closestChair = StartCoroutine(Think(.5f, () => { tempChair = SearchClosestChair(); }));
 
-        /*
-        raysCt = StartCoroutine( 
-            ThinkWithStop(.5f, 
-            Rays, 
-            () => { return !MusicPlayer.isRunning || !arrivedChair; }));
-            */
+    }
+
+    public void SetAnim()
+    {
+        anim["walk"].speed = speed;
     }
 
     public void Update()

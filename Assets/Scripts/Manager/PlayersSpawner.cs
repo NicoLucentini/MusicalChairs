@@ -18,6 +18,14 @@ public class PlayersSpawner : MonoBehaviour {
         return charactersSettings[Random.Range(0, charactersSettings.Count)];
     }
 
+    public EntitySettings GetMainCharacterSetting()
+    {
+        var e = ScriptableObject.CreateInstance<EntitySettings>();
+        e.prefab = GameManager.instance.player.prefab;
+        e.characterImage = GameManager.instance.player.image;
+        return e;
+    }
+
     public GameObject GetRandomPrefab()
     {
         return charactersPrefab[Random.Range(0, charactersPrefab.Count)];
@@ -60,11 +68,11 @@ public class PlayersSpawner : MonoBehaviour {
             {
                 go = GameObject.Instantiate(playerPrefab, new Vector3(pos.x, 0, pos.y), Quaternion.identity);              
                 go.name = "Player " + i;
-
-
-                Character ch = go.GetComponent<Character>();
-                ch.CreateVisual(GameManager.instance.player.prefab);
-                GameManager.instance.uiController.SetCharacter(ch);
+                
+                BaseEntity ch = go.GetComponent<BaseEntity>();
+                ch.ApplySettings(GetMainCharacterSetting());
+                //GameManager.instance.uiController.SetCharacter(ch);
+                GameManager.instance.uiController.SetPlayer(ch);
 
             }
             //Creo la ia
@@ -76,15 +84,15 @@ public class PlayersSpawner : MonoBehaviour {
                 Vector3 dir = VectorHelp.Dir2D(go.transform.position, Vector3.zero);
 
                 go.transform.LookAt(transform.position + dir * 2);
-                Character ch = go.GetComponent<Character>();
+                BaseEntity ch = go.GetComponent<BaseEntity>();
               
                 if (survCount == 0)
                 {
-                    ch.CreateVisual(GetRandomSetting().prefab);
+                    ch.ApplySettings(GetRandomSetting());
                 }
                 else
                 {
-                    ch.CreateVisual(survivors[survIndex].prefab);
+                    ch.ApplySettings(survivors[survIndex]);
                     survIndex++;
                 }
 
