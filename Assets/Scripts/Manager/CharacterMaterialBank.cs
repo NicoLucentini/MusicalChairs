@@ -4,20 +4,11 @@ using UnityEngine;
 
 public class CharacterMaterialBank : MonoBehaviour
 {
-    public List<Material> allMats = new List<Material>();
-    public List<GameObject> characters = new List<GameObject>();
-    public List<EntitySettings> entitySettings = new List<EntitySettings>();
+    [SerializeField]private List<Material> allMats = new List<Material>();
+    [SerializeField]private List<GameObject> characters = new List<GameObject>();
+    [SerializeField]private List<EntitySettings> entitySettings = new List<EntitySettings>();
 
-    public Material GetRandom()
-    {
-        return allMats[Random.Range(0, allMats.Count)];
-    }
-    public GameObject GetRandomChar()
-    {
-        return characters[Random.Range(0, characters.Count)];
-    }
-    public EntitySettings GetRandomSetting()
-    {
-        return entitySettings[Random.Range(0, entitySettings.Count)];
-    }
+    public Material GetRandomMaterial() => allMats.Random();
+    public GameObject GetRandomChar() => characters.Random();
+    public EntitySettings GetRandomSetting() => entitySettings.Random();
 }

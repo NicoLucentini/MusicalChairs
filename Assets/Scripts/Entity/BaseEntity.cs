@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
 
-public class BaseEntity : MonoBehaviour, ISitable
+public class BaseEntity : Entity, ISitable
 {
     public List<Transform> waypoints = new List<Transform>();
 
@@ -505,8 +505,9 @@ public class BaseEntity : MonoBehaviour, ISitable
 
     public void Jump()
     {
+        Debug.Log("TryJump");
         if (onAir || onFloor || sit || !MusicPlayer.isRunning) return;
-
+        Debug.Log("Jump");
         StartCoroutine(CTJump());
     }
 

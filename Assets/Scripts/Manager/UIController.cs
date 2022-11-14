@@ -16,7 +16,7 @@ public class UIController : MonoBehaviour
     public BaseEntity player;
 
 
-    Character character;
+    public Character character;
 
     private void OnEnable()
     {

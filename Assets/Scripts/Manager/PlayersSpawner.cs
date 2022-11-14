@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,13 +10,8 @@ public class PlayersSpawner : MonoBehaviour {
 
 
     public List<EntitySettings> charactersSettings;
-    public List<GameObject> charactersPrefab;
 
     public List<EntitySettings> survivors = new List<EntitySettings>();
-    public EntitySettings GetRandomSetting()
-    {
-        return charactersSettings[Random.Range(0, charactersSettings.Count)];
-    }
 
     public EntitySettings GetMainCharacterSetting()
     {
@@ -36,9 +31,7 @@ public class PlayersSpawner : MonoBehaviour {
   
     public void SpawnAll(Elipse e, float size = 1)
     {
-      
         amountChairs = GameManager.instance.chairs.Count + 1;
-
         StartCoroutine(StartSpawning(e, amountChairs, size));
     }
 

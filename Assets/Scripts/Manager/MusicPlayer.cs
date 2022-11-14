@@ -53,14 +53,12 @@ public class MusicPlayer : MonoBehaviour {
     {
         CancelInvoke("StopMusic");
         isRunning = true;
-        audioSource.clip = clips[Random.Range(0, clips.Count)];
+        audioSource.clip = clips.Random();
         audioSource.Play();
         stopsIn = Random.Range(timeSpans.x, timeSpans.y);
         StartCoroutine(CTUi());
         Invoke("StopMusic", stopsIn);
-
-        if (onMusicStarted != null)
-            onMusicStarted();
+        onMusicStarted?.Invoke();
     }
 
     public void StopMusic()
@@ -69,7 +67,6 @@ public class MusicPlayer : MonoBehaviour {
         StopAllCoroutines();
         audioSource.Stop();
         stopppedTime = Time.time;
-        if (onMusicStopped != null)
-            onMusicStopped();
+        onMusicStopped?.Invoke();
     }
 }

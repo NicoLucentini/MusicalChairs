@@ -4,7 +4,11 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Linq;
 
-public class Character : MonoBehaviour , ISitable
+public class Entity : MonoBehaviour{
+
+}
+
+public class Character : Entity , ISitable
 {
 
     
@@ -102,13 +106,11 @@ public class Character : MonoBehaviour , ISitable
     }
 
     public void Sit() {
+        Debug.Log("Sit");
         targetChair = SearchClosestChair();
         agent.SetDestination(targetChair.transform.position);
     }
-    public void Jump()
-    {
-
-    }
+    
     void MoveTo(Vector3 pos) {
 
         Vector3 direction = (pos - transform.position).normalized;

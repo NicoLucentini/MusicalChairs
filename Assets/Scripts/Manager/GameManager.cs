@@ -167,6 +167,7 @@ public class GameManager : MonoBehaviour
         profile.roundsPlayed++;
         playerReactionTime = (profile.totalReactionTime / (float)profile.roundsPlayed);
     }
+
     void SaveProfile()
     {
         SaveManager.SaveData(profile);
@@ -218,8 +219,6 @@ public class GameManager : MonoBehaviour
         if (middle != null)
             Destroy(middle);
             
-        //if (chairIndex <= 4) return;
-
         GameObject go = GameObject.Instantiate(centerPrefab, transform.position, Quaternion.identity);
 
         float size = (chairSize + waypointsSize) / 2;
@@ -520,20 +519,7 @@ public class GameManager : MonoBehaviour
         if (gameLostCount > 1 && gameLostCount % gameLostForAd == 0) {
             AdManager.instance.AdShow("endgameobligatory", null , null);
         }
-        /*
-        if (gameLostCount > 1 && gameLostCount % 3 == 0)
-        {
-            
-            AdManager.instance.AdShow("endgameobligatory",
-                    null,
-                    () => StartCoroutine(RestartGame(3)));
-          
-        }
-        else
-        {
-            StartCoroutine(RestartGame(3));
-        }
-        */
+      
         StartCoroutine(RestartGame(3));
     }
 
