@@ -4,22 +4,18 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
 
-public class BaseEntity : Entity, ISitable
+public class BaseEntity : Entity
 {
     public List<Transform> waypoints = new List<Transform>();
 
     [Header("References")]
-    public Renderer render;
 
     public Animation anim;
     public GameObject baseVisual;
     public Rigidbody rb;
     public Collider myCollider;
     public NavMeshAgent agent;
-
-    public GameObject knockedGo;
-
-
+    
     [Header("Sit")]
     [ReadOnly] public Chair tempChair;
     [ReadOnly] public bool last = false;
@@ -104,6 +100,7 @@ public class BaseEntity : Entity, ISitable
 
     private void Awake()
     {
+        GameManager.instance.players.Add(this);
         rb = GetComponent<Rigidbody>();
         myCollider = GetComponent<Collider>();
         agent = GetComponent<NavMeshAgent>();
@@ -125,7 +122,7 @@ public class BaseEntity : Entity, ISitable
         MusicPlayer.onMusicStopped -= OnMusicStopped;
         Chair.onChairOccuped -= OnChairOccuped;
         Banana.onGetHit -= OnBananaHit;
-        // PlayersSpawner.allPlayersInstantiated -= () => thinkCoroutine = StartCoroutine(Think(1.5f, CheckDistance));
+        //PlayersSpawner.allPlayersInstantiated -= () => thinkCoroutine = StartCoroutine(Think(1.5f, CheckDistance));
     }
 
     bool humanHasClicked = false;
@@ -186,8 +183,8 @@ public class BaseEntity : Entity, ISitable
 
         if (isHuman)
         {
-            GameObject model = GameObject.Instantiate(GameManager.instance.player.prefab, transform);
-            anim = model.GetComponent<Animation>();
+            //GameObject model = GameObject.Instantiate(GameManager.instance.player.prefab, transform);
+            //anim = model.GetComponent<Animation>();
             GameManager.instance.uiController.SetPlayer(this);
             speed = baseSpeed;
         }
@@ -219,6 +216,7 @@ public class BaseEntity : Entity, ISitable
         if (!arrivedChair)
         {
             MoveToChairAgent();
+            //Side();
         }
         else
         {
@@ -231,7 +229,7 @@ public class BaseEntity : Entity, ISitable
                 CheckPushDistance();
             }
 
-            MoveToWaypoint();
+                MoveToWaypoint();
 
         }
 
@@ -357,7 +355,7 @@ public class BaseEntity : Entity, ISitable
 
     #region FALL
 
-    public void Fall()
+    private void Fall()
     {
         StartCoroutine(CTFall(0, fallDuration));
     }
@@ -366,7 +364,7 @@ public class BaseEntity : Entity, ISitable
 
     #region PUSH
 
-    public void CheckCloseToSlow()
+    private void CheckCloseToSlow()
     {
         if (isHuman) return;
 
@@ -382,7 +380,7 @@ public class BaseEntity : Entity, ISitable
     }
 
     //no me gusta este checkdistance pero we
-    public void CheckPushDistance()
+    private void CheckPushDistance()
     {
         if (hasAttacked || onFloor || onAir) return;
 
@@ -418,7 +416,7 @@ public class BaseEntity : Entity, ISitable
         anim.Play("walk");
     }
 
-    public void Push(Transform t)
+    private void Push(Transform t)
     {
         anim.Play("attack");
         stop = true;
@@ -429,7 +427,7 @@ public class BaseEntity : Entity, ISitable
 
     }
 
-    public void GetPushed(float inTime, Transform pushed = null)
+    private void GetPushed(float inTime, Transform pushed = null)
     {
         whoPushMe = pushed;
         hasBeenAttacked = true;
@@ -559,7 +557,7 @@ public class BaseEntity : Entity, ISitable
     }
 
 
-    public void EvadeFloorThings()
+    private void EvadeFloorThings()
     {
         if (isHuman) return;
         if (triesToJump) return;
@@ -576,7 +574,8 @@ public class BaseEntity : Entity, ISitable
         lastBananaDodge = visualizeBanana;
 
     }
-    public void LookAtTarget(Vector3 toPos)
+
+    private void LookAtTarget(Vector3 toPos)
     {
         Vector3 pos = VectorHelp.XZ(toPos, transform.position.y);
         Vector3 lookDir = (pos - transform.position).normalized;
@@ -584,7 +583,7 @@ public class BaseEntity : Entity, ISitable
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * 10);
     }
 
-    public void GoNext()
+    private void GoNext()
     {
         if (waypointIndex < waypoints.Count - 1)
             waypointIndex++;
@@ -726,6 +725,8 @@ public class BaseEntity : Entity, ISitable
 
     public void Sit()
     {
+        Debug.Log($"Sit {gameObject.name}");
+        
         if (sit) return;
         if (isHuman && !humanHasClicked) return;
         float time = 0;
@@ -755,6 +756,8 @@ public class BaseEntity : Entity, ISitable
     }
 
     void GoToChair() {
+        
+        Debug.Log($"Go to chair {gameObject.name}");
         tempChair = SearchClosestChair();
         if (tempChair == null)
         {
@@ -854,7 +857,7 @@ public class BaseEntity : Entity, ISitable
     }
     #endregion
 
-    public int GetWp(int current)
+    private int GetWp(int current)
     {
         if (current > waypoints.Count - 1)
             return 0;

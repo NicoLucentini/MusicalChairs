@@ -8,7 +8,7 @@ public class CharacterMaterialBank : MonoBehaviour
     [SerializeField]private List<GameObject> characters = new List<GameObject>();
     [SerializeField]private List<EntitySettings> entitySettings = new List<EntitySettings>();
 
-    public Material GetRandomMaterial() => allMats.Random();
-    public GameObject GetRandomChar() => characters.Random();
-    public EntitySettings GetRandomSetting() => entitySettings.Random();
+    public Material GetRandomMaterial() => allMats.GetRandom();
+    public GameObject GetRandomChar() => characters.GetRandom();
+    public EntitySettings GetRandomSetting() => entitySettings.GetRandom();
 }

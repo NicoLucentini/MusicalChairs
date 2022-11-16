@@ -23,7 +23,7 @@ public class PlayersSpawner : MonoBehaviour {
 
     public GameObject GetRandomPrefab()
     {
-        return charactersPrefab[Random.Range(0, charactersPrefab.Count)];
+        return charactersSettings.GetRandom().prefab;
     }
 
     public int amountChairs = 0;
@@ -68,7 +68,6 @@ public class PlayersSpawner : MonoBehaviour {
                 GameManager.instance.uiController.SetPlayer(ch);
 
             }
-            //Creo la ia
             else
             {
                 go = GameObject.Instantiate(otherPrefab, new Vector3(pos.x, 0, pos.y), Quaternion.identity);
@@ -81,7 +80,7 @@ public class PlayersSpawner : MonoBehaviour {
               
                 if (survCount == 0)
                 {
-                    ch.ApplySettings(GetRandomSetting());
+                    ch.ApplySettings(charactersSettings.GetRandom());
                 }
                 else
                 {

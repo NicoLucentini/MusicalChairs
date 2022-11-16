@@ -1,8 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public enum GameState
 {
@@ -205,7 +207,7 @@ public class GameManager : MonoBehaviour
         for (int i = 10; i > 0; i--)
         {
             
-            CrearWaypoints(elipse, i);
+            CreateWaypoints(elipse, i);
             CreateChairs(elipse, i);
             transform.position += Vector3.right * 10;
         }
@@ -227,7 +229,8 @@ public class GameManager : MonoBehaviour
         go.transform.localScale = new Vector3(elipse.xAxis * size, 2, elipse.yAxis * size);
         middle = go;
     }
-    public void CreateChairs(Elipse e, int amount)
+
+    private void CreateChairs(Elipse e, int amount)
     {
         chairSize = GetChairSize(amount);
         chairPrefab = background.chairPrefab;
@@ -279,27 +282,11 @@ public class GameManager : MonoBehaviour
 
             yield return new WaitForEndOfFrame();
         }
-        /*
-        yield return new WaitForSeconds(5);
-        while (gameRunning)
-        {
-            var pos = waypoints[Random.Range(0, waypoints.Count)].position;
-            if (Physics.Raycast(new Ray(pos + new Vector3(0, 2, 0), Vector3.down), 3, 1 << 10))
-            {
-                yield return new WaitForEndOfFrame();
-            }
-            else
-            {
-                GameObject go = GameObject.Instantiate(bananaPrefab, pos, Quaternion.identity);
-                bananas.Add(go);
-                float t = Random.Range(3, 6);
-                yield return new WaitForSeconds(t);
-            }
-           
-        }
-        */
     }
-    public void CrearWaypoints(Elipse e, int amount)
+
+    public static Action<List<Transform>> onWaypointsInstantiated;
+
+    private void CreateWaypoints(Elipse e, int amount)
     {
         waypointsSize = GetWpSize(chairIndex) * waypointsMult;
         int wpCount = waypoints.Count;
@@ -333,12 +320,10 @@ public class GameManager : MonoBehaviour
     
     void OnChairPopulated()
     {
-        if (chairs.Count(x => x.occuped) == chairs.Count)
-        {
-            allChairsOccuped?.Invoke();
-
-            Invoke("DestroyBadPlayers", 2f);
-        }
+        if (!chairs.All(x => x.occuped)) return;
+        
+        allChairsOccuped?.Invoke();
+        Invoke("DestroyBadPlayers", 2f);
     }
 
     void OnMusicStopped()
@@ -404,21 +389,23 @@ public class GameManager : MonoBehaviour
             StartNewLevel();
     }
 
-    public void RemoveThings()
+    private void RemoveThings()
     {
         RemoveAllPlayers();
         DestroyAllBananas();
-        RemoveAllChairs();       
-        //RemoveAllWaypoints()
+        RemoveAllChairs();
+        //RemoveAllWaypoints();
     }
-    public void RemoveAllChairs()
+
+    private void RemoveAllChairs()
     {
         for (int i = 0; i < chairs.Count; i++)
             Destroy(chairs[i].gameObject);
 
         chairs.Clear();
     }
-    public void RemoveAllPlayers()
+
+    private void RemoveAllPlayers()
     {
         for (int i = 0; i < players.Count; i++)
         {
@@ -427,7 +414,7 @@ public class GameManager : MonoBehaviour
         }
         players.Clear();
     }
-    public void RemoveAllWaypoints()
+    private void RemoveAllWaypoints()
     {
         for (int i = 0; i < waypoints.Count; i++)
             Destroy(waypoints[i].gameObject);
@@ -447,7 +434,8 @@ public class GameManager : MonoBehaviour
         Time.timeScale = isPaused ? 0 : 1;
         pauseImage.sprite = isPaused ? playIcon : pauseIcon;
     }
-    public void ChangePause(bool paused)
+
+    private void ChangePause(bool paused)
     {
         isPaused = paused;
         Time.timeScale = isPaused ? 0 : 1;
@@ -475,7 +463,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void OnGameWon()
+    private void OnGameWon()
     {
         won = true;
         guiManager.ChangeEndText(true, "¡GANASTE!", 10);
@@ -523,7 +511,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(RestartGame(3));
     }
 
-    public void StartLevel(int level)
+    private void StartLevel(int level)
     {
         chairIndex = level;
         Time.timeScale = 1;
@@ -531,14 +519,14 @@ public class GameManager : MonoBehaviour
         StartCoroutine(RestartGame(3));
     }
 
-    public void StartGame()
+    private void StartGame()
     {
         ChangePause(false);
         Time.timeScale = 1;
 
         guiManager.ChangeChairsText(chairIndex.ToString());
 
-        CrearWaypoints(elipse, 20);
+        CreateWaypoints(elipse, 20);
         CreateChairs(elipse, chairIndex);
 
         playersSpawner.SpawnAll(elipse, waypointsSize);
@@ -551,13 +539,13 @@ public class GameManager : MonoBehaviour
     
 
     //Empieza un nuevo nivel --
-    public void StartNewLevel()
+    private void StartNewLevel()
     {
         chairIndex--;
         StartLevel(chairIndex);
     }
 
-    public void OnGameEnd()
+    private void OnGameEnd()
     {
         StopAllCoroutines();
         CancelInvoke("DestroyBadPlayers");
@@ -568,9 +556,6 @@ public class GameManager : MonoBehaviour
         playersSpawner.Cancel();
         musicPlayer.StopMusic();
         state = GameState.ENDED;
-
-        //StartCoroutine(DoInTime(.5f, () => { Time.timeScale = 0; }));
-        //Time.timeScale = 0;
     }
 
     IEnumerator DoInTime(float t, System.Action action)

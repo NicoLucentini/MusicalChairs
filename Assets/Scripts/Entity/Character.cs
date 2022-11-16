@@ -8,7 +8,7 @@ public class Entity : MonoBehaviour{
 
 }
 
-public class Character : Entity , ISitable
+public class Character : Entity
 {
 
     
