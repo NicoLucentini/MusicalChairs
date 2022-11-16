@@ -20,6 +20,7 @@ public class PlayersSpawner : MonoBehaviour {
         var e = ScriptableObject.CreateInstance<EntitySettings>();
         e.prefab = GameManager.instance.player.prefab;
         e.characterImage = GameManager.instance.player.image;
+        e.pushChance = 100;
         return e;
     }
 

@@ -25,7 +25,6 @@ public class BaseEntity : Entity
     private Collider myCollider;
     private NavMeshAgent agent;
     
-    [FormerlySerializedAs("tempChair")]
     [Header("Sit")]
     [ReadOnly] public Chair targetChair;
     
@@ -118,7 +117,7 @@ public class BaseEntity : Entity
         Banana.onGetHit -= OnBananaHit;
     }
 
-    public bool IsSit() => state != EntityState.SIT;
+    public bool IsSit() => state == EntityState.SIT;
     
     private void OnTriggerEnter(Collider collision)
     {
@@ -535,7 +534,6 @@ public class BaseEntity : Entity
         }
     }
 
-    //jump / fall / Occupe
     IEnumerator CTFall(float inT, float dur)
     {
         CancelInvoke("WalkAnim");
