@@ -1,19 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayersSpawner : MonoBehaviour {
 
-    public Transform spawn;
     public GameObject playerPrefab;
     public GameObject otherPrefab;
 
+    
+    public static System.Action allPlayersInstantiated;
 
     public List<EntitySettings> charactersSettings;
 
     public List<EntitySettings> survivors = new List<EntitySettings>();
 
-    public EntitySettings GetMainCharacterSetting()
+    private EntitySettings GetMainCharacterSetting()
     {
         var e = ScriptableObject.CreateInstance<EntitySettings>();
         e.prefab = GameManager.instance.player.prefab;
@@ -26,24 +28,22 @@ public class PlayersSpawner : MonoBehaviour {
         return charactersSettings.GetRandom().prefab;
     }
 
-    public int amountChairs = 0;
-    public int freq = 1;
   
     public void SpawnAll(Elipse e, float size = 1)
     {
-        amountChairs = GameManager.instance.chairs.Count + 1;
-        StartCoroutine(StartSpawning(e, amountChairs, size));
+        StartCoroutine(StartSpawning(e, AmountOfPlayers(), size));
     }
+
+    int AmountOfPlayers() => GameManager.instance.chairs.Count + 1;
 
     public void Cancel()
     {
         StopAllCoroutines();
     }
-    public static System.Action allPlayersInstantiated;
 
     IEnumerator StartSpawning(Elipse e, int amount, float size = 1)
     {
-        int playerPos = Random.Range(0, amountChairs);
+        int playerPos = Random.Range(0, amount);
 
         GameObject go = null;
         BaseEntity be = null;
@@ -64,7 +64,6 @@ public class PlayersSpawner : MonoBehaviour {
                 
                 BaseEntity ch = go.GetComponent<BaseEntity>();
                 ch.ApplySettings(GetMainCharacterSetting());
-                //GameManager.instance.uiController.SetCharacter(ch);
                 GameManager.instance.uiController.SetPlayer(ch);
 
             }

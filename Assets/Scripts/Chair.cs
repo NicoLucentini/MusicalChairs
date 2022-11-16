@@ -8,45 +8,26 @@ public class Chair : MonoBehaviour
     public bool occuped;
     public BaseEntity owner;
 
-    public static System.Action onChairPopulated;
     public static System.Action<Chair> onChairOccuped;
 
-    public GameObject visual;
-
-    public Quaternion initialDir;
-
-    public Color chairOccupedColor;
-    public Renderer rend;
-    public Vector3 initialPos;
+    private Quaternion initialDir;
+    private Vector3 initialPos;
 
     public void Set(BaseEntity e)
     {
         Debug.Log($"El player {e.gameObject.name} se sento en {gameObject.name}");
         occuped = true;
         owner = e;
+        
         initialPos = e.transform.position + new Vector3(0,.5f,0);
-        //e.transform.position = transform.position;
-        e.stop = true;
-        e.sit = true;
-        if (e.rb != null)
-        {
-            e.rb.mass *= 30;
-            e.rb.constraints = RigidbodyConstraints.FreezeAll;
-        }
-
         initialDir = e.transform.rotation;
 
         owner.transform.position = transform.position;
         owner.transform.rotation = transform.rotation;
-             
 
         //StartCoroutine(MatchRotation());
         //StartCoroutine(MatchPosition());
-        e.anim.Play("idle");
-
-        //rend.material.color = chairOccupedColor;
       
-        onChairPopulated?.Invoke();
         onChairOccuped?.Invoke(this);
 
     }

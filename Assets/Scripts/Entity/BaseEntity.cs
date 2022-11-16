@@ -1,33 +1,39 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
+public enum EntityState
+{
+    WALKING,
+    TO_CHAIR,
+    SIT
+}
 public class BaseEntity : Entity
 {
     public List<Transform> waypoints = new List<Transform>();
 
     [Header("References")]
 
-    public Animation anim;
-    public GameObject baseVisual;
-    public Rigidbody rb;
-    public Collider myCollider;
-    public NavMeshAgent agent;
+    [SerializeField]private GameObject baseVisual;
+    private Animation anim;
+    private Rigidbody rb;
+    private Collider myCollider;
+    private NavMeshAgent agent;
     
+    [FormerlySerializedAs("tempChair")]
     [Header("Sit")]
-    [ReadOnly] public Chair tempChair;
-    [ReadOnly] public bool last = false;
-    public bool sit;
-    public Vector2 reactionTime;
+    [ReadOnly] public Chair targetChair;
+    
     [Header("Custom Properties")]
     public EntitySettings settings;
-    public bool useSettings = false;
 
     [Header("Properties")]
     public bool isHuman;
-    public float baseOffset = .2f;
 
     [Header("Movement")]
 
@@ -44,27 +50,20 @@ public class BaseEntity : Entity
     public Vector2 maxSpeedVariation = new Vector2(-.2f, .2f);
     public float offset = .2f;
     public bool useSlerp;
-
-    public Vector2 speedToChair;
-    public float speedChair;
-    public float jumpChance;
-
+    
     private float slowDistance = 1.25f;
 
     [ReadOnly] public int waypointIndex = 0;
     [ReadOnly] public Transform target;
 
-    [ReadOnly] public float jumpTimer;
 
     [Header("Empujar")]
     public float pushCd = 1.5f;
     public float pushDistance;
     public float pushFallDuration = 1.5f;
-    public float pushChance;
-
+    
     [ReadOnly] public bool hasAttacked = true;
     [ReadOnly] public bool hasBeenAttacked = false;
-    [ReadOnly] public Transform whoPushMe;
     [ReadOnly] public BaseEntity visualizeEnemy;
     public Ray pushRay;
     public RaycastHit pushHit;
@@ -84,19 +83,18 @@ public class BaseEntity : Entity
     Coroutine raysCt;
 
 
-    [Header("Other")]
-    public List<float> directions;
-    public List<float> angles;
-
-
-
+    private Action stateAction;
+    public EntityState state;
+    private Action<Vector3> lookAtPosAction;
 
     #region UNITY
-    float Y
-    {
-        get { return transform.position.y; }
-    }
+    float Y => transform.position.y;
 
+    void ChangeState(EntityState state, Action action)
+    {
+        this.state = state;
+        this.stateAction = action;
+    }
 
     private void Awake()
     {
@@ -105,28 +103,23 @@ public class BaseEntity : Entity
         myCollider = GetComponent<Collider>();
         agent = GetComponent<NavMeshAgent>();
         agent.enabled = false;
-        //GameManager.instance.players.Add(this);
-    }
-    private void OnEnable()
-    {
+        
         GameManager.allChairsOccuped += AllChairsOccuped;
         MusicPlayer.onMusicStopped += OnMusicStopped;
         Chair.onChairOccuped += OnChairOccuped;
         Banana.onGetHit += OnBananaHit;
-        //PlayersSpawner.allPlayersInstantiated += () => thinkCoroutine = StartCoroutine(Think(1.5f, CheckDistance));
     }
+   
     private void OnDestroy()
     {
         GameManager.instance.players.Remove(this);
         GameManager.allChairsOccuped -= AllChairsOccuped;
         MusicPlayer.onMusicStopped -= OnMusicStopped;
-        Chair.onChairOccuped -= OnChairOccuped;
         Banana.onGetHit -= OnBananaHit;
-        //PlayersSpawner.allPlayersInstantiated -= () => thinkCoroutine = StartCoroutine(Think(1.5f, CheckDistance));
     }
 
-    bool humanHasClicked = false;
-
+    public bool IsSit() => state != EntityState.SIT;
+    
     private void OnTriggerEnter(Collider collision)
     {
         if (collision.gameObject.layer == 11)
@@ -145,28 +138,19 @@ public class BaseEntity : Entity
     public void ApplySettings(EntitySettings settings)
     {
         this.settings = settings;
-        useSettings = true;
-        if (!useSettings) return;
-        if (settings == null) return;
-
-        //baseSpeed = settings.baseSpeed;
-        //maxSpeed = settings.maxSpeed;
-        //minSpeed = settings.minSpeed;
-        //accel = settings.accel;
-        //maxSpeedVariation = settings.maxSpeedVariation;
-        reactionTime = settings.reactionTime;
-
-        //speedToChair = settings.speedToChair;
-        pushChance = settings.pushChance;
-        jumpChance = settings.jumpChance;
         
-        GameObject go = GameObject.Instantiate(settings.prefab, transform);
+        GameObject go = Instantiate(settings.prefab, transform);
         anim = go.GetComponent<Animation>();
     }
 
 
+    Transform GetClosestAndAheadWaypoint()
+    {
+      return waypoints
+          .OrderBy(x => Vector3.Distance(transform.position, x.transform.position))
+          .First(x => VectorHelp.CheckSide(transform.position, x.position - transform.position, transform.up) > 0);
+    }
 
-    float sitTime;
     private void Start()
     {
         rb.Sleep();
@@ -174,18 +158,12 @@ public class BaseEntity : Entity
 
         if (waypoints.Count > 0)
         {
-            var temps = waypoints.OrderBy(x => Vector3.Distance(transform.position, x.transform.position));
-            Transform temp = temps.First(x => VectorHelp.CheckSide(transform.position, x.position - transform.position, transform.up) > 0);
-
-            waypointIndex = GameManager.instance.waypoints.IndexOf(temp);
-            target = waypoints[waypointIndex];
+            target = GetClosestAndAheadWaypoint();
+            waypointIndex = GameManager.instance.waypoints.IndexOf(target);
         }
 
         if (isHuman)
         {
-            //GameObject model = GameObject.Instantiate(GameManager.instance.player.prefab, transform);
-            //anim = model.GetComponent<Animation>();
-            GameManager.instance.uiController.SetPlayer(this);
             speed = baseSpeed;
         }
         else
@@ -200,92 +178,66 @@ public class BaseEntity : Entity
       
         DoInTime(Random.Range(2, 5), () => { hasAttacked = false; });
 
-        closestChair = StartCoroutine(Think(.5f, () => { tempChair = SearchClosestChair(); }));
+        closestChair = StartCoroutine(Think(.5f, () => { targetChair = SearchClosestChair(); }));
 
+        ChangeState(EntityState.WALKING, StateWalking);
+
+        lookAtPosAction = StrategyForLookAt();
     }
 
-    public void SetAnim()
+    Action<Vector3> StrategyForLookAt()
     {
-        anim["walk"].speed = speed;
+        return useSlerp ? LookAtPosSlerped : (Action<Vector3>)LookAtPosLegacy;
     }
 
     public void Update()
     {
-        if (sit) return;
-
-        if (!arrivedChair)
-        {
-            MoveToChairAgent();
-            //Side();
-        }
-        else
-        {
-
-            if (MusicPlayer.isRunning)
-            {
-                Rays();
-                CheckCloseToSlow();
-                EvadeFloorThings();
-                CheckPushDistance();
-            }
-
-                MoveToWaypoint();
-
-        }
-
+        stateAction();
     }
 
-    Vector3 fromWpPos;
-    Vector3 toWpPos;
-
-    void Side()
+    void StateAfk()
     {
-        if (tempChair == null) return;
-        Transform from = waypoints.OrderBy(x => Vector3.Distance(transform.position, x.transform.position)).First();
-        Transform to = waypoints.OrderBy(x => Vector3.Distance(x.transform.position, tempChair.transform.position)).First();
-
-        fromWpPos = from.position;
-        toWpPos = to.position;
-
-        int fromIndex = waypoints.IndexOf(from);
-        int toIndex = waypoints.IndexOf(to);
-
-        side = Pathfinding.GetShortestPath(fromIndex, toIndex, waypoints.Count);
-        if (side == 0)
-            side = (int)VectorHelp.CheckFront(transform, from);
     }
 
-    bool arrivedChair = true;
-    Vector3 direction;
-    float distanceToChair = 0;
-    int side = 0;
+    void StateWalking()
+    {
+        if (MusicPlayer.isRunning)
+        {
+            Rays();
+            CheckCloseToSlow();
+            EvadeFloorThings();
+            CheckPushDistance();
+        }
 
+        MoveToWaypoint();
+    }
+   
 
+    
+   
     #endregion
 
     #region EVENTS
 
     void OnMusicStopped()
     {
-        if (rb != null)
-        {
-            rb.constraints = RigidbodyConstraints.None;
-            rb.velocity = Vector3.zero;
-            rb.Sleep();
-        }
-
-        if (!isHuman)
-            baseVisual.SetActive(false);
-
         if (checkCloseCoroutine != null)
             StopCoroutine(checkCloseCoroutine);
+        
+        
+        rb.constraints = RigidbodyConstraints.None;
+        rb.velocity = Vector3.zero;
+        rb.Sleep();
+
+        if (isHuman) return;
+        
+        baseVisual.SetActive(false);
+        Sit();
     }
 
     void AllChairsOccuped()
     {
-        if (sit) return;
-
-        Debug.Log("Alguna vez entro aca?");
+        Debug.Log($"AllChairsOccuped I'm last {gameObject.name}");
         Last();
     }
     void OnBananaHit(Transform t)
@@ -293,21 +245,13 @@ public class BaseEntity : Entity
         if (visualizeBanana == t)
             visualizeBanana = null;
     }
-    void OnChairOccuped(Chair temp)
+    void OnChairOccuped(Chair occupedChair)
     {
+        if (targetChair != occupedChair) return;
 
-        Debug.Log($"La silla {temp.gameObject.name} fue ocupada");
-        if (tempChair != temp) return;
-        if (tempChair.owner == this) return;
+        Debug.Log($"Mi silla ({gameObject.name}) la ocuparon " + occupedChair.gameObject.name);
 
-        Debug.Log($"Mi silla ({gameObject.name}) la ocuparon " + temp.gameObject.name);
-
-        tempChair = SearchClosestChair();
-        direction = Vector3.zero;
-        tempChair = null;
-        anim.Play("idle");
-        //Invoke("Occupe", .1f);
-        Sit();
+        targetChair = SearchClosestChair();
     }
 
 
@@ -379,7 +323,6 @@ public class BaseEntity : Entity
         }
     }
 
-    //no me gusta este checkdistance pero we
     private void CheckPushDistance()
     {
         if (hasAttacked || onFloor || onAir) return;
@@ -392,7 +335,7 @@ public class BaseEntity : Entity
         {
             hasAttacked = true;
 
-            if (Random.Range(0, 100) <= pushChance)
+            if (Random.Range(0, 100) <= settings.pushChance)
             {
                 Push(visualizeEnemy.transform);
             }
@@ -410,7 +353,7 @@ public class BaseEntity : Entity
 
     void WalkAnim()
     {
-        if (sit) return;
+        if (IsSit()) return;
 
         CancelInvoke("WalkAnim");
         anim.Play("walk");
@@ -429,10 +372,7 @@ public class BaseEntity : Entity
 
     private void GetPushed(float inTime, Transform pushed = null)
     {
-        whoPushMe = pushed;
         hasBeenAttacked = true;
-
-        //quizas cuando te empujan y termina la partida?
         StartCoroutine(CTFall(inTime, pushFallDuration));
     }
     #endregion
@@ -504,36 +444,12 @@ public class BaseEntity : Entity
     public void Jump()
     {
         Debug.Log("TryJump");
-        if (onAir || onFloor || sit || !MusicPlayer.isRunning) return;
+        if (onAir || onFloor || state != EntityState.WALKING || !MusicPlayer.isRunning) return;
         Debug.Log("Jump");
-        StartCoroutine(CTJump());
+        StartCoroutine(CtJump());
     }
 
-    void MoveToChairAgent() {
-        if (onFloor || onAir || sit || arrivedChair) return;
-        if (tempChair == null) return;
-
-        agent.enabled = true;
-        float distanceToChair;
-        distanceToChair = VectorHelp.Distance2D(transform.position, tempChair.transform.position);
-
-        if (distanceToChair < .5f)
-        {
-            if (isHuman && GameManager.instance.gameRunning)
-            {
-                StartCoroutine(CTTime(.5f, GameManager.instance.OnGameLose));
-            }
-            agent.enabled = false;
-            arrivedChair = true;
-            tempChair.Set(this);
-        }
-        else
-        {
-            agent.SetDestination(tempChair.transform.position);
-            agent.Move(Vector3.zero);
-        }
-
-    }
+    
 
     void MoveToWaypoint()
     {
@@ -547,13 +463,11 @@ public class BaseEntity : Entity
 
         if (distanceToWp < offset)
         {
-            GoNext();
+            GoToNextWaypoint();
         }
 
-        if (useSlerp)
-            LookAtTarget(toPos);
-        else
-            transform.LookAt(toPos);
+        
+        lookAtPosAction(toPos);
     }
 
 
@@ -566,16 +480,15 @@ public class BaseEntity : Entity
         if (distanceToBanana > .75f) return;
 
         //Debug.Log("Jump at " + distanceToBanana);
-        if (Random.Range(0, 100) <= jumpChance)
-        {
+        if (Random.Range(0, 100) <= settings.jumpChance)
             Jump();
-        }
+        
         triesToJump = true;
         lastBananaDodge = visualizeBanana;
 
     }
 
-    private void LookAtTarget(Vector3 toPos)
+    private void LookAtPosSlerped(Vector3 toPos)
     {
         Vector3 pos = VectorHelp.XZ(toPos, transform.position.y);
         Vector3 lookDir = (pos - transform.position).normalized;
@@ -583,11 +496,13 @@ public class BaseEntity : Entity
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * 10);
     }
 
-    private void GoNext()
+    private void LookAtPosLegacy(Vector3 toPos) => transform.LookAt(toPos);
+    
+
+    private void GoToNextWaypoint()
     {
-        if (waypointIndex < waypoints.Count - 1)
-            waypointIndex++;
-        else
+        waypointIndex++;
+        if(waypointIndex >= waypoints.Count)
             waypointIndex = 0;
 
         target = waypoints[waypointIndex];
@@ -605,13 +520,10 @@ public class BaseEntity : Entity
 
     #region CORUTINAS
 
-    //GENERICAS
     IEnumerator CTTime(float t, System.Action func)
     {
         yield return new WaitForSeconds(t);
-
-        if (func != null)
-            func();
+        func?.Invoke();
     }
 
     IEnumerator Think(float dur, System.Action action)
@@ -623,37 +535,12 @@ public class BaseEntity : Entity
         }
     }
 
-    IEnumerator ThinkUpdate(System.Action action)
-    {
-        while (true)
-        {
-            yield return new WaitForEndOfFrame();
-            action?.Invoke();
-        }
-    }
-
-    IEnumerator ThinkWithStop(float dur = 1, System.Action action = null, System.Func<bool> stop = null)
-    {
-        while (true)
-        {
-            if (stop != null)
-            {
-                if (stop())
-                    yield break;
-            }
-
-            yield return new WaitForSeconds(dur);
-
-            action?.Invoke();
-        }
-    }
-
     //jump / fall / Occupe
     IEnumerator CTFall(float inT, float dur)
     {
         CancelInvoke("WalkAnim");
         yield return new WaitForSeconds(inT);
-        // knockedGo.SetActive(true);
+        
         anim.Play("death");
 
         stop = true;
@@ -661,7 +548,6 @@ public class BaseEntity : Entity
         myCollider.enabled = false;
 
         yield return new WaitForSeconds(dur);
-        //knockedGo.SetActive(false);
 
         onFloor = false;
         myCollider.enabled = true;
@@ -669,31 +555,28 @@ public class BaseEntity : Entity
         anim.Play("walk");
     }
 
-    IEnumerator CTJump()
+    IEnumerator CtJump()
     {
         onAir = true;
 
         myCollider.enabled = false;
 
-        float jumpForce = 7.5f;
-        Vector3 goDown = Vector3.zero;
+        var jumpForce = 7.5f;
+        var goDown = Vector3.zero;
 
-        Vector3 goUp = Vector3.up * jumpForce;
+        var goUp = Vector3.up * jumpForce;
 
-        float oldSpeed = speed;
+        var oldSpeed = speed;
         speed = 1.5f;
 
-        Vector3 initPos = transform.position;
         while (transform.position.y >= 0)
         {
             goDown += Vector3.down * 15f * Time.deltaTime;
-            Vector3 pos = goUp + goDown;
+            var pos = goUp + goDown;
             transform.position += pos * Time.deltaTime;
             anim.transform.Rotate(new Vector3(-360, 0, 0) * Time.deltaTime);
             yield return new WaitForEndOfFrame();
         }
-
-        // agent.enabled = true;
 
         speed = oldSpeed;
         myCollider.enabled = true;
@@ -701,146 +584,91 @@ public class BaseEntity : Entity
         onAir = false;
         anim.transform.localEulerAngles = Vector3.zero;
         transform.position = VectorHelp.XZ(transform.position, 0);
-        jumpTimer = VectorHelp.Distance2D(transform.position, initPos);
     }
-
-    IEnumerator CTOccupe(float t)
-    {
-        yield return new WaitForSeconds(t);
-
-        while (onFloor || onAir)
-            yield return new WaitForEndOfFrame();
-
-        Occupe();
-    }
-
+    
     #endregion
 
     #region SIT
 
     public void OnClickSit() {
-        humanHasClicked = true;
+        
+        var reactedTime = Time.time - MusicPlayer.stopppedTime;
+        var msg = MusicPlayer.isRunning? "Too soon" : reactedTime.ToString("n2") + " s" ;
+        
+        GameManager.instance.guiManager.ChangeReactionText(msg);
+        GameManager.instance.AddReactionTime(reactedTime);
+        
         Sit();
     }
 
-    public void Sit()
+    void Sit()
     {
         Debug.Log($"Sit {gameObject.name}");
         
-        if (sit) return;
-        if (isHuman && !humanHasClicked) return;
-        float time = 0;
-
-        if (!isHuman)
-        {
-            time = GameManager.instance.playerReactionTime;
-        }
-        else
-        {
-            sitTime = Time.time;
-            float reac = 0; 
-            string msg = "Early";
-            if (!MusicPlayer.isRunning)
-            {
-                reac = sitTime - MusicPlayer.stopppedTime;
-                msg =  reac.ToString("n2") + " s";
-            }
-            GameManager.instance.guiManager.ChangeReactionText(msg);
-            GameManager.instance.AddReactionTime(reac);
-           
-        }
-
-        //StartCoroutine(CTOccupe(time));
-     
-        GoToChair();
-    }
-
-    void GoToChair() {
+        if (IsSit()) return;
         
-        Debug.Log($"Go to chair {gameObject.name}");
-        tempChair = SearchClosestChair();
-        if (tempChair == null)
+        targetChair = SearchClosestChair();
+        if (targetChair == null)
         {
             Last();
         }
-        arrivedChair = false;
         stop = true;
-        
+        ChangeState(EntityState.TO_CHAIR, StateGoToChair);
+
     }
+    
+    void StateGoToChair() {
+        if (onFloor || onAir || IsSit()) return;
+        if (targetChair == null) return;
 
-    //ONLY CALLED ON HUMAN?????
-    //esto deberia sacarlo a la bosta
+        agent.enabled = true;
+        float distanceToChair = VectorHelp.Distance2D(transform.position, targetChair.transform.position);
 
-        /*
-        public void Sit(Chair chair)
+        if (distanceToChair < .5f)
         {
-            if (closestChair != null)
-                StopCoroutine(closestChair);
-
-            sitTime = Time.time;
-            float reac = sitTime - MusicPlayer.stopppedTime;
-            GameManager.instance.guiManager.ChangeReactionText(reac.ToString("n2"));
-
-            tempChair = chair;
-            stop = true;
-            arrivedChair = false;
-            tempChair.visual.SetActive(true); //????
-            anim.Play("run");
-            Side();
-            speedChair = speedToChair.x;
-        }
-    */
-    bool readyToSit = false;
-    //ocuppe is called when my chair is occuped, doesnt matter if im on floor or air..or my reaction time or 
-    public void Occupe()
-    {
-        if (last)
-        {
-            tempChair = null;
-            return;
-        }
-
-        readyToSit = true;
-
-        CancelInvoke("Occupe");
-
-        if (closestChair != null)
-            StopCoroutine(closestChair);
-
-        if (tempChair == null)
-            tempChair = SearchClosestChair();
-
-        if (tempChair == null)
-        {
-            Debug.Log("Si esto te da null perdiste macho");
-            Last();
-            return;
+            if (isHuman && GameManager.instance.gameRunning)
+            {
+                StartCoroutine(CTTime(.5f, GameManager.instance.OnGameLose));
+            }
+            SitOnChair();
         }
         else
         {
-            stop = true;
-            arrivedChair = false;
-            direction = Vector3.zero;
-            anim.Play("run");
-            speedChair = speedToChair.x;
-            Side();
+            agent.SetDestination(targetChair.transform.position);
+            agent.Move(Vector3.zero);
         }
 
     }
-
-    public Chair SearchClosestChair()
+    public void SitOnChair()
     {
-        return GameManager.instance.chairs.OrderBy(x => Vector3.Distance(transform.position, x.transform.position)).Where(x => !x.occuped).FirstOrDefault();
+        targetChair.Set(this);
+        GameManager.allChairsOccuped -= AllChairsOccuped;
+        Chair.onChairOccuped -= OnChairOccuped;
+        
+        agent.enabled = false;
+        stop = true;
+        if (rb != null)
+        {
+            rb.mass *= 30;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+        }
+        
+        anim.Play("idle");
+        ChangeState(EntityState.SIT, StateAfk);
+    }
+
+
+    private Chair SearchClosestChair()
+    {
+        return GameManager.instance.chairs
+            .OrderBy(x => Vector3.Distance(transform.position, x.transform.position))
+            .FirstOrDefault(x => !x.occuped);
     }
     void Last()
     {
-        last = true;
         agent.enabled = false;
         anim.Play("idle");
-        rb = GetComponent<Rigidbody>();
-        if (rb == null)
-            rb = gameObject.AddComponent<Rigidbody>();
-
+        
         rb.constraints = RigidbodyConstraints.None;
 
         float xR =3f;
@@ -854,6 +682,9 @@ public class BaseEntity : Entity
         rb.AddTorque(new Vector3(x, 0, z) * 5, ForceMode.Impulse);
         rb.useGravity = true;
         stop = true;
+        
+        Chair.onChairOccuped -= OnChairOccuped;
+        GameManager.allChairsOccuped -= AllChairsOccuped;
     }
     #endregion
 
@@ -885,6 +716,30 @@ public class BaseEntity : Entity
 
         */
     }
+    
+    //Legacy...
+    void Side()
+    {
+        if (targetChair == null) return;
+        
+        Transform from = waypoints.OrderBy(x => Vector3.Distance(transform.position, x.transform.position)).First();
+        Transform to = waypoints.OrderBy(x => Vector3.Distance(x.transform.position, targetChair.transform.position)).First();
+
+        fromWpPos = from.position;
+        toWpPos = to.position;
+
+        int fromIndex = waypoints.IndexOf(from);
+        int toIndex = waypoints.IndexOf(to);
+
+        side = Pathfinding.GetShortestPath(fromIndex, toIndex, waypoints.Count);
+        if (side == 0)
+            side = (int)VectorHelp.CheckFront(transform, from);
+    }
+
+    int side = 0;
+    Vector3 fromWpPos;
+    Vector3 toWpPos;
+
 }
 
 

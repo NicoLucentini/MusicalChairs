@@ -150,10 +150,12 @@ public class GameManager : MonoBehaviour
             instance = this;
 
         MusicPlayer.onMusicStopped += OnMusicStopped;
-        Chair.onChairPopulated += OnChairPopulated;
+        Chair.onChairOccuped += OnChairPopulated;
         playerReactionTime = defaultReactionTime;
         SaveManager.LoadData(OnLoadData);
     }
+
+    
 
     public void AddReactionTime(float value = 0)
     {
@@ -318,7 +320,7 @@ public class GameManager : MonoBehaviour
     
     #region REGISTERED EVENTS
     
-    void OnChairPopulated()
+    void OnChairPopulated(Chair chair)
     {
         if (!chairs.All(x => x.occuped)) return;
         
@@ -333,12 +335,6 @@ public class GameManager : MonoBehaviour
         gameRunning = false;
         state = GameState.STARTED_MUSIC_STOPPED;
         DestroyAllBananas();
-
-        foreach (var player in players)
-        {
-            if (!player.isHuman)
-                player.Sit();
-        }
         Invoke("DestroyBadPlayers", 5f);
     }
 
@@ -360,7 +356,7 @@ public class GameManager : MonoBehaviour
         //tempP = players.First(x => !x.sit);
         foreach (var p in players)
         {
-            if (!p.sit)
+            if (!p.IsSit())
                 tempP = p;
         }
 

@@ -14,7 +14,6 @@ public class Pathfinding : MonoBehaviour
     {
         path = GetPath(origin.position, target, GameManager.instance.waypoints);      
     }
-    //return side...
     public static int GetShortestPath(int current, int target, int count)
     {
         float side = Mathf.Abs(target - current);

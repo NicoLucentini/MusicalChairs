@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 public class MusicPlayer : MonoBehaviour {
 
     public AudioSource audioSource;
@@ -24,8 +23,6 @@ public class MusicPlayer : MonoBehaviour {
     IEnumerator CTUi()
     {
         thing.anchoredPosition = new Vector2(-uiLength / 2, 0);
-        //secStep = uiReal / (timeSpans.y - timeSpans.x);
-
         secStep = uiLength / ((timeSpans.x * 2) + (timeSpans.y - timeSpans.x));
 
         while (true)

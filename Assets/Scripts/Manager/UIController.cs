@@ -15,9 +15,6 @@ public class UIController : MonoBehaviour
     [Header("Runtime Set")]
     public BaseEntity player;
 
-
-    public Character character;
-
     private void OnEnable()
     {
         MusicPlayer.onMusicStopped += StopAllCoroutines;
@@ -27,19 +24,12 @@ public class UIController : MonoBehaviour
     {
         this.player = player;
     }
-    public void SetCharacter(Character character)
-    {
-        this.character = character;
-    }
-
 
     public void Sit()
     {
         StopAllCoroutines();
         if(player!= null)
             player.OnClickSit();
-
-        character?.Sit();
     }
     
     public void LeftDown()
