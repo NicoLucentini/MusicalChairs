@@ -25,7 +25,6 @@ public class AdManager : MonoBehaviour
 
     void Start ()
     {
-        //Advertisement.Initialize("1469859", true);
         Advertisement.Initialize("2849603", true);
     }
     public void AdShow(string video = "rewardedVideo", OnPositiveResult clbk = null, System.Action onAdEnded = null)

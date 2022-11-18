@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -18,8 +19,8 @@ public class GameManager : MonoBehaviour
 
     //EVENTS
     public static System.Action onGameStarted;
-    public static System.Action onGameLose;
-    public static System.Action allChairsOccuped;
+    public static event System.Action onGameLose;
+    public static event System.Action allChairsOccuped;
 
 
     [Header("References")]
@@ -50,8 +51,7 @@ public class GameManager : MonoBehaviour
     [Header("Chairs")]
     public int startChairIndex = 10;
     public bool chairsSizeFixed = true;
-    //MAKE IT OBSOLETE
-    public GameObject chairPrefab;
+    public GameObject chairBase;
     [Header("Bananas")]
     //MAKE IT OBSOLETE
     public GameObject bananaPrefab;
@@ -81,10 +81,7 @@ public class GameManager : MonoBehaviour
     [Header("Ad")]
     [SerializeField] private int gameLostCount = 0;
     [SerializeField] private int gameLostForAd = 2;
-
-    [Header("Prefabs")]
-    public GameObject chair;
-
+    
     [Header("Player Settings")]
     public BuyableCharacter player;
     public BuyableBackground background;
@@ -204,18 +201,6 @@ public class GameManager : MonoBehaviour
         chairIndex = startChairIndex;
     }
 
-    void TestInstance()
-    {
-        for (int i = 10; i > 0; i--)
-        {
-            
-            CreateWaypoints(elipse, i);
-            CreateChairs(elipse, i);
-            transform.position += Vector3.right * 10;
-        }
-    }
-
-
     #region CREATIONS
     void CreateCenter()
     {
@@ -235,7 +220,7 @@ public class GameManager : MonoBehaviour
     private void CreateChairs(Elipse e, int amount)
     {
         chairSize = GetChairSize(amount);
-        chairPrefab = background.chairPrefab;
+        
         for (int i = 0; i < amount; i++)
         {
             float angle = ((float)i / (float)amount);
@@ -243,22 +228,16 @@ public class GameManager : MonoBehaviour
             pos += new Vector2(transform.position.x, transform.position.y);
 
 
-            GameObject go = GameObject.Instantiate(chair, new Vector3(pos.x, .1f, pos.y), Quaternion.identity);
-            GameObject go2 = GameObject.Instantiate(chairPrefab, new Vector3(pos.x, .1f, pos.y), Quaternion.identity, go.transform);
+            GameObject go = GameObject.Instantiate(chairBase, new Vector3(pos.x, .1f, pos.y), Quaternion.identity);
+            GameObject go2 = GameObject.Instantiate(background.chairPrefab, new Vector3(pos.x, .1f, pos.y), Quaternion.identity, go.transform);
             go.name = "Chair " + i;
 
-           // go2.transform.SetParent(go.transform);
-            //go.GetComponent<Chair>().rend = go2.GetComponent<MeshRenderer>();
-
-
-            //Vector3 dir = VectorHelp.Dir2D(go.transform.position, Vector3.zero);
             Vector3 dir = VectorHelp.Dir2D(go.transform.position, transform.position).normalized;
             go.transform.LookAt(transform.position - dir * 2);
-           // go2.transform.rotation = go.transform.rotation;
+            
             chairs.Add(go.GetComponent<Chair>());
         }
 
-        CreateCenter();
     }
     void CreateBananas()
     {
@@ -285,9 +264,7 @@ public class GameManager : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
     }
-
-    public static Action<List<Transform>> onWaypointsInstantiated;
-
+    
     private void CreateWaypoints(Elipse e, int amount)
     {
         waypointsSize = GetWpSize(chairIndex) * waypointsMult;
@@ -312,7 +289,6 @@ public class GameManager : MonoBehaviour
         
         FindObjectOfType<ElipseRenderer>().DrawElipse(e, elipseAmount, waypointsSize);
 
-        CreateBananas();
     }
 
     #endregion
@@ -334,20 +310,14 @@ public class GameManager : MonoBehaviour
 
         gameRunning = false;
         state = GameState.STARTED_MUSIC_STOPPED;
-        DestroyAllBananas();
+        RemoveAllBananas();
         Invoke("DestroyBadPlayers", 5f);
     }
 
     #endregion
 
     #region REMOVES
-    void DestroyAllBananas()
-    {
-        for (int i = 0; i < bananas.Count; i++)
-            Destroy(bananas[i].gameObject);
-
-        bananas.Clear();
-    }
+    
     void DestroyBadPlayers()
     {
         CancelInvoke("DestroyBadPlayers");
@@ -356,7 +326,7 @@ public class GameManager : MonoBehaviour
         //tempP = players.First(x => !x.sit);
         foreach (var p in players)
         {
-            if (!p.IsSit())
+            if (!p.IsSeated())
                 tempP = p;
         }
 
@@ -388,12 +358,18 @@ public class GameManager : MonoBehaviour
     private void RemoveThings()
     {
         RemoveAllPlayers();
-        DestroyAllBananas();
+        RemoveAllBananas();
         RemoveAllChairs();
-        //RemoveAllWaypoints();
     }
 
-    private void RemoveAllChairs()
+    void RemoveAllBananas()
+    {
+        for (int i = 0; i < bananas.Count; i++)
+            Destroy(bananas[i].gameObject);
+
+        bananas.Clear();
+    }
+    void RemoveAllChairs()
     {
         for (int i = 0; i < chairs.Count; i++)
             Destroy(chairs[i].gameObject);
@@ -401,16 +377,13 @@ public class GameManager : MonoBehaviour
         chairs.Clear();
     }
 
-    private void RemoveAllPlayers()
+    void RemoveAllPlayers()
     {
         for (int i = 0; i < players.Count; i++)
-        {
-            players[i].waypoints.Clear();
             Destroy(players[i].gameObject);
-        }
         players.Clear();
     }
-    private void RemoveAllWaypoints()
+    void RemoveAllWaypoints()
     {
         for (int i = 0; i < waypoints.Count; i++)
             Destroy(waypoints[i].gameObject);
@@ -443,6 +416,7 @@ public class GameManager : MonoBehaviour
         gameLostCount++;
 
         won = false;
+        
         guiManager.ChangeEndText(true, "¡Better Luck Next Time!", 1, continueClicked, true, !continueClicked);
         guiManager.Continue();
         guiManager.endGo.GetComponent<Animation>().Play("EndGameAnim");
@@ -462,14 +436,14 @@ public class GameManager : MonoBehaviour
     private void OnGameWon()
     {
         won = true;
-        guiManager.ChangeEndText(true, "¡GANASTE!", 10);
-        guiManager.endGo.GetComponent<Animation>().Play("EndGameAnim");
         int reward = RewardTable.GetScore(chairIndex);
         moneyEarned += reward;
-        guiManager.SetRestartButton(true, "Play Again");
+        guiManager.OnGameWon();
         OnGameEnd();
     }
-   
+
+  
+
 
     public void OnClickContinue()
     {
@@ -477,7 +451,6 @@ public class GameManager : MonoBehaviour
         continueClicked = true;
         guiManager.Restart(false, "");
         guiManager.StopContinueCt();
-       // Time.timeScale = 1; // necesito la timeScale en 1?
         AdManager.instance.AdShow("rewardedVideo",() => StartLevel(chairIndex));
     }
 
@@ -523,8 +496,10 @@ public class GameManager : MonoBehaviour
         guiManager.ChangeChairsText(chairIndex.ToString());
 
         CreateWaypoints(elipse, 20);
+        CreateBananas();
         CreateChairs(elipse, chairIndex);
-
+        CreateCenter();
+        
         playersSpawner.SpawnAll(elipse, waypointsSize);
         musicPlayer.StartMusic();
 
@@ -553,14 +528,7 @@ public class GameManager : MonoBehaviour
         musicPlayer.StopMusic();
         state = GameState.ENDED;
     }
-
-    IEnumerator DoInTime(float t, System.Action action)
-    {
-        yield return new WaitForSeconds(t);
-
-        action();
-    }
-
+    
     IEnumerator RestartGame(int time)
     {
         int i = time;

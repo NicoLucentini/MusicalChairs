@@ -86,11 +86,6 @@ public class GuiManager : MonoBehaviour
 
         endGo.GetComponent<Image>().enabled = showImg;
         adButton.SetActive(showAdButton);
-
-        /*
-        if (duration != 0)
-            Invoke("OffEndText", duration);
-            */
     }
     void OffEndText()
     {
@@ -100,5 +95,12 @@ public class GuiManager : MonoBehaviour
     public void ShowScore(int score)
     {
         scoreText.text = "Score: " + score;
+    }
+    
+    public void OnGameWon()
+    {
+       ChangeEndText(true, "¡GANASTE!", 10);
+       endGo.GetComponent<Animation>().Play("EndGameAnim");
+       SetRestartButton(true, "Play Again");
     }
 }

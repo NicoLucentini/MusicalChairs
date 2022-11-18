@@ -4,18 +4,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public enum EntityState
 {
     WALKING,
     TO_CHAIR,
-    SIT
+    SEATED
 }
 public class BaseEntity : Entity
 {
-    public List<Transform> waypoints = new List<Transform>();
+    private List<Transform> waypoints = new List<Transform>();
 
     [Header("References")]
 
@@ -75,11 +74,11 @@ public class BaseEntity : Entity
     [ReadOnly] public bool canFallWithBanana = true;
 
     [Header("Corutinas")]
-    public Coroutine releaseCorutine;
-    public Coroutine thinkCoroutine;
-    public Coroutine checkCloseCoroutine;
-    Coroutine closestChair;
-    Coroutine raysCt;
+    Coroutine ct_release;
+    Coroutine ct_think;
+    Coroutine ct_checkClose;
+    Coroutine ct_closestChair;
+    Coroutine ct_rays;
 
 
     private Action stateAction;
@@ -117,7 +116,7 @@ public class BaseEntity : Entity
         Banana.onGetHit -= OnBananaHit;
     }
 
-    public bool IsSit() => state == EntityState.SIT;
+    public bool IsSeated() => state == EntityState.SEATED;
     
     private void OnTriggerEnter(Collider collision)
     {
@@ -177,7 +176,7 @@ public class BaseEntity : Entity
       
         DoInTime(Random.Range(2, 5), () => { hasAttacked = false; });
 
-        closestChair = StartCoroutine(Think(.5f, () => { targetChair = SearchClosestChair(); }));
+        ct_closestChair = StartCoroutine(Think(.5f,  SearchClosestChair));
 
         ChangeState(EntityState.WALKING, StateWalking);
 
@@ -194,17 +193,15 @@ public class BaseEntity : Entity
         stateAction();
     }
 
-    void StateAfk()
-    {
-    }
+    void StateAfk() { }
 
     void StateWalking()
     {
         if (MusicPlayer.isRunning)
         {
-            Rays();
-            CheckCloseToSlow();
-            EvadeFloorThings();
+            CheckForEnemyAndBanana();
+            CheckCloseToSlow(); // bot
+            EvadeFloorThings(); // bot
             CheckPushDistance();
         }
 
@@ -220,8 +217,8 @@ public class BaseEntity : Entity
 
     void OnMusicStopped()
     {
-        if (checkCloseCoroutine != null)
-            StopCoroutine(checkCloseCoroutine);
+        if (ct_checkClose != null)
+            StopCoroutine(ct_checkClose);
         
         
         rb.constraints = RigidbodyConstraints.None;
@@ -250,7 +247,7 @@ public class BaseEntity : Entity
 
         Debug.Log($"Mi silla ({gameObject.name}) la ocuparon " + occupedChair.gameObject.name);
 
-        targetChair = SearchClosestChair();
+        SearchClosestChair();
     }
 
 
@@ -259,23 +256,25 @@ public class BaseEntity : Entity
     #region Accel
     public void Accelerate()
     {
-        speed += accel * Time.deltaTime;
-        speed = Mathf.Clamp(speed, minSpeed, maxSpeed);
-        anim["walk"].speed = speed;
+        ChangeSpeed(1f);
     }
     public void Desaccelerate()
     {
-        speed -= accel * Time.deltaTime;
+        ChangeSpeed(-1f);
+    }
+    private void ChangeSpeed(float forward)
+    {
+        speed += accel * forward * Time.deltaTime;
         speed = Mathf.Clamp(speed, minSpeed, maxSpeed);
         anim["walk"].speed = speed;
     }
 
     public void Release()
     {
-        if (releaseCorutine != null)
-            StopCoroutine(releaseCorutine);
+        if (ct_release != null)
+            StopCoroutine(ct_release);
 
-        releaseCorutine = StartCoroutine(CTRelease());
+        ct_release = StartCoroutine(CTRelease());
     }
     public IEnumerator CTRelease()
     {
@@ -344,15 +343,13 @@ public class BaseEntity : Entity
         }
     }
 
-    void DoInTime(float t, System.Action func)
-    {
+    void DoInTime(float t, System.Action func) =>
         StartCoroutine(CTTime(t, func));
-    }
 
 
     void WalkAnim()
     {
-        if (IsSit()) return;
+        if (IsSeated()) return;
 
         CancelInvoke("WalkAnim");
         anim.Play("walk");
@@ -378,7 +375,9 @@ public class BaseEntity : Entity
 
     #region MOVEMENT
 
-    void Rays()
+    private int layerMaskEnemyAndBanana = 1 << 10 | 1 << 11;
+    
+    void CheckForEnemyAndBanana()
     {
         float totalDistance = 0;
         RaycastHit hit;
@@ -390,7 +389,7 @@ public class BaseEntity : Entity
         totalDistance += Vector3.Distance(origin, to);
 
 
-        if (Physics.Linecast(origin, to, out hit, 1 << 10 | 1 << 11))
+        if (Physics.Linecast(origin, to, out hit, layerMaskEnemyAndBanana))
         {
             if (hit.collider.gameObject.layer == 10)
                 enemy = hit.collider.GetComponent<BaseEntity>();
@@ -420,7 +419,7 @@ public class BaseEntity : Entity
                 to = waypoints[toIndex].position + new Vector3(0, 0.4f, 0);
                 Debug.DrawLine(origin, to, Color.blue);
 
-                if (Physics.Linecast(origin, to, out hit, 1 << 10))
+                if (Physics.Linecast(origin, to, out hit, layerMaskEnemyAndBanana))
                 {
                     if (hit.collider.gameObject.layer == 10)
                         enemy = hit.collider.GetComponent<BaseEntity>();
@@ -454,7 +453,7 @@ public class BaseEntity : Entity
     {
         if (stop) return;
 
-        Vector3 toPos = VectorHelp.XZ(target.position, Y);
+        Vector3 toPos = target.position.WithY(Y);
 
         transform.position += transform.forward * speed * Time.deltaTime;
 
@@ -489,7 +488,7 @@ public class BaseEntity : Entity
 
     private void LookAtPosSlerped(Vector3 toPos)
     {
-        Vector3 pos = VectorHelp.XZ(toPos, transform.position.y);
+        Vector3 pos = toPos.WithY(Y);
         Vector3 lookDir = (pos - transform.position).normalized;
         Quaternion lookRot = Quaternion.LookRotation(lookDir);
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRot, Time.deltaTime * 10);
@@ -603,9 +602,9 @@ public class BaseEntity : Entity
     {
         Debug.Log($"Sit {gameObject.name}");
         
-        if (IsSit()) return;
+        if (IsSeated()) return;
         
-        targetChair = SearchClosestChair();
+        SearchClosestChair();
         if (targetChair == null)
         {
             Last();
@@ -616,10 +615,13 @@ public class BaseEntity : Entity
     }
     
     void StateGoToChair() {
-        if (onFloor || onAir || IsSit()) return;
+        if (onFloor || onAir || IsSeated()) return;
         if (targetChair == null) return;
 
         agent.enabled = true;
+        agent.SetDestination(targetChair.transform.position);
+        agent.Move(Vector3.zero);
+        
         float distanceToChair = VectorHelp.Distance2D(transform.position, targetChair.transform.position);
 
         if (distanceToChair < .5f)
@@ -630,14 +632,8 @@ public class BaseEntity : Entity
             }
             SitOnChair();
         }
-        else
-        {
-            agent.SetDestination(targetChair.transform.position);
-            agent.Move(Vector3.zero);
-        }
-
     }
-    public void SitOnChair()
+    private void SitOnChair()
     {
         targetChair.Set(this);
         GameManager.allChairsOccuped -= AllChairsOccuped;
@@ -645,20 +641,17 @@ public class BaseEntity : Entity
         
         agent.enabled = false;
         stop = true;
-        if (rb != null)
-        {
-            rb.mass *= 30;
-            rb.constraints = RigidbodyConstraints.FreezeAll;
-        }
+        rb.mass *= 30;
+        rb.constraints = RigidbodyConstraints.FreezeAll;
         
         anim.Play("idle");
-        ChangeState(EntityState.SIT, StateAfk);
+        ChangeState(EntityState.SEATED, StateAfk);
     }
 
 
-    private Chair SearchClosestChair()
+    private void SearchClosestChair()
     {
-        return GameManager.instance.chairs
+        targetChair = GameManager.instance.chairs
             .OrderBy(x => Vector3.Distance(transform.position, x.transform.position))
             .FirstOrDefault(x => !x.occuped);
     }

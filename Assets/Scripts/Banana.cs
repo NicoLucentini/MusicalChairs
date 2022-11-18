@@ -10,7 +10,7 @@ public class Banana : MonoBehaviour
     Vector3 initScale;
 
 
-    public static System.Action<Transform> onGetHit;
+    public static event System.Action<Transform> onGetHit;
 
     public AnimationCurve animCurveY;
     public AnimationCurve animCurveXZ;

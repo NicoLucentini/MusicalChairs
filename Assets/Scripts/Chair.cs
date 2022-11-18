@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Chair : MonoBehaviour
@@ -8,7 +7,7 @@ public class Chair : MonoBehaviour
     public bool occuped;
     public BaseEntity owner;
 
-    public static System.Action<Chair> onChairOccuped;
+    public static event System.Action<Chair> onChairOccuped;
 
     private Quaternion initialDir;
     private Vector3 initialPos;
