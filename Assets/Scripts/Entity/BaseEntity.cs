@@ -222,7 +222,7 @@ public class BaseEntity : Entity
         
         
         rb.constraints = RigidbodyConstraints.None;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.Sleep();
 
         if (isHuman) return;
