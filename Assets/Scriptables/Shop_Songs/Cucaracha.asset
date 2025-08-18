@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a37736f97a5d5e14b872b3a019d0ff4d, type: 3}
+  m_Name: Cucaracha
+  m_EditorClassIdentifier: 
+  itemName: Cucaracha
+  cost: 1000
+  isAdBuyable: 0
+  clip: {fileID: 8300000, guid: de304adb9cd816f46afbafd66528dde4, type: 3}

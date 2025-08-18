@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 413867732e9b7324d865e9cdd2e6052b, type: 3}
+  m_Name: Dragon
+  m_EditorClassIdentifier: 
+  itemName: Dragon
+  cost: 1500
+  isAdBuyable: 0
+  image: {fileID: 21300000, guid: 733a77468423aac44a76a694638cf9cb, type: 3}
+  prefab: {fileID: 1071987984013276, guid: 86d695ba72e14924d8cfd4e41fa4db38, type: 2}

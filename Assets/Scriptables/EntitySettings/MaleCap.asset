@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77fd136edd607a448b25b04aa586ac30, type: 3}
+  m_Name: MaleCap
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 152384, guid: 6fb37f825ee63264b9c2600bf1a52006, type: 2}
+  baseSpeed: 1
+  maxSpeed: 1.5
+  minSpeed: 0.5
+  accel: 1
+  maxSpeedVariation: {x: 0, y: 0.5}
+  reactionTime: {x: 0.9, y: 1.2}
+  skin: {fileID: 0}
+  speedToChair: {x: 3, y: 5}
+  pushChance: 75
+  jumpChance: 50
+  characterImage: {fileID: 21300000, guid: 58e8b8728c3b62e4ca0973af79597cf1, type: 3}
