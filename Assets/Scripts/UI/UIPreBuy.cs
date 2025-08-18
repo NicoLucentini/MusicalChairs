@@ -36,7 +36,7 @@ public class UIPreBuy : MonoBehaviour
 
     public void OnClickBuyWithAd()
     {
-        AdManager.instance.AdShow("rewardedVideo", OnSucces, null);
+        AdManager.instance.AdShow(OnSucces);
     }
 
     public void OnClickBuyWithMoney()

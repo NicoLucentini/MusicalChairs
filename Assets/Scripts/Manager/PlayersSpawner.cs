@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class PlayersSpawner : MonoBehaviour {
 
@@ -30,12 +29,11 @@ public class PlayersSpawner : MonoBehaviour {
     }
 
   
-    public void SpawnAll(Elipse e, float size = 1)
+    public void SpawnAll(Elipse e, int playersAmount, float size = 1)
     {
-        StartCoroutine(StartSpawning(e, AmountOfPlayers(), size));
+        StartCoroutine(StartSpawning(e, playersAmount, size));
     }
-
-    int AmountOfPlayers() => GameManager.instance.chairs.Count + 1;
+    
 
     public void Cancel()
     {
@@ -64,6 +62,7 @@ public class PlayersSpawner : MonoBehaviour {
                 go.name = "Player " + i;
                 
                 BaseEntity ch = go.GetComponent<BaseEntity>();
+                Debug.Log(ch == null);
                 ch.ApplySettings(GetMainCharacterSetting());
                 GameManager.instance.uiController.SetPlayer(ch);
 
@@ -80,6 +79,8 @@ public class PlayersSpawner : MonoBehaviour {
               
                 if (survCount == 0)
                 {
+                    var asd = charactersSettings.GetRandom();
+                    Debug.Log(asd == null);
                     ch.ApplySettings(charactersSettings.GetRandom());
                 }
                 else

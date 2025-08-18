@@ -42,7 +42,7 @@ public class UIItemMusic : MonoBehaviour
     }
     public void BuyWithAd()
     {
-        AdManager.instance.AdShow("rewardedVideo", OnItemBuy, null);
+        AdManager.instance.AdShow( OnItemBuy);
     }
    
 

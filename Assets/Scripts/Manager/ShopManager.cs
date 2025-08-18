@@ -122,7 +122,7 @@ public class ShopManager : MonoBehaviour
     }
     public void OnClickFreeCoins()
     {
-        AdManager.instance.AdShow("rewardedVideo", FreeCoinsClbk);
+        AdManager.instance.AdShow(FreeCoinsClbk);
     }
 
     void FreeCoinsClbk()

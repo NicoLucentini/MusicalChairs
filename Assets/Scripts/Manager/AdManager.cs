@@ -1,94 +1,76 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 
 using UnityEngine.Advertisements;
 
 
-public class AdManager : MonoBehaviour
+public class AdManager : MonoBehaviour, IUnityAdsShowListener
 {
     public static AdManager instance;
 
-    public delegate void OnPositiveResult();
-    public event OnPositiveResult onPositiveResult;
-    public System.Action adEnded;
+    Action onPositiveResult = null;
 
-    private void Awake()
-    {
-        if (instance == null)
-            instance = this;
-        else
-            Destroy(this);
+    [Header("Ad")]
+    public int gamesPlayedForAd = 3;
+    public int freeCoinsCDInMinutes = 60;
+    public bool adView = false;
 
+    void Awake() {
+        instance = this;
     }
 
-    void Start ()
+    void Start()
     {
-        Advertisement.Initialize("2849603", true);
+        Advertisement.Initialize("1469859", true);
     }
-    public void AdShow(string video = "rewardedVideo", OnPositiveResult clbk = null, System.Action onAdEnded = null)
+    public void AdShow(Action clbk ,  string placementId = "rewardedVideo" )
     {
-        if (ConnectivityManager.reachability == NetworkReachability.NotReachable)
-        {
-            Menu.instance.ShowBlocker(true, "Cant show ad at this moment");
-            OnAdEnded();
-            return;
-        }
-
-       adEnded = null;
-       onPositiveResult = null;
-       StartCoroutine(ShowAd(video,clbk, onAdEnded));
+#if UNITY_ANDROID
+        StartCoroutine(ShowAd(clbk, placementId));
+#endif
     }
-
-    public IEnumerator ShowAd(string video = "rewardedVideo", OnPositiveResult clbk = null, System.Action onAdEnded = null)
+    public IEnumerator ShowAd(Action clbk, string placementId = "rewardedVideo")
     {
         print("Adv ini: " + Advertisement.isInitialized);
-        float timer = 4;
-        Menu.instance.ShowBlocker(true, "Waiting Ad...",()=> { OnAdEnded(); StopAllCoroutines(); }, 4);
 
-        while (!Advertisement.IsReady(video))
-        {
-            timer -= Time.deltaTime;
-            if (timer <= 0)
-            {
-                OnAdEnded();
-                Menu.instance.ShowBlocker(true, "Cant show ad at this moment");
-                yield break;
-            }
+        while (!Advertisement.isInitialized)
             yield return new WaitForEndOfFrame();
-        }
 
-        ShowOptions so = new ShowOptions();
-        so.resultCallback = OnShowResultado;
         onPositiveResult = clbk;
-        adEnded = onAdEnded;
-        Advertisement.Show(video,so);
-    }
-    
+        Advertisement.Show("rewardedVideo", this);
 
-    void OnAdEnded()
+
+
+#if UNITY_EDITOR
+        var currentTimeScale = Time.timeScale;
+        Time.timeScale = 0;
+        yield return new WaitUntil(() => !Advertisement.isShowing);
+        Time.timeScale = currentTimeScale;
+#endif
+    }
+
+    public void OnUnityAdsShowFailure(string placementId, UnityAdsShowError error, string message)
     {
-            adEnded?.Invoke();
+        throw new System.NotImplementedException();
     }
-    void OnShowResultado(ShowResult sr)
+
+    public void OnUnityAdsShowStart(string placementId)
     {
-       
-        if(sr == ShowResult.Failed)
-        {
-            print("No hago nada");
-        }
-        else if(sr == ShowResult.Finished)
-        {   
-           onPositiveResult?.Invoke();
-        }
-        else if(sr == ShowResult.Skipped)
-        {
-        
-        }
-        Menu.instance.ShowBlocker(false, "Waiting Ad...");
-        OnAdEnded();
+        throw new System.NotImplementedException();
     }
 
+    public void OnUnityAdsShowClick(string placementId)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void OnUnityAdsShowComplete(string placementId, UnityAdsShowCompletionState showCompletionState)
+    {
+        if (placementId.Equals(placementId) && showCompletionState.Equals(UnityAdsShowCompletionState.COMPLETED))
+        {
+            onPositiveResult?.Invoke();
+        }
+    }
 }

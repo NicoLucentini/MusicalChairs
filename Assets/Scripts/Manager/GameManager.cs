@@ -451,7 +451,7 @@ public class GameManager : MonoBehaviour
         continueClicked = true;
         guiManager.Restart(false, "");
         guiManager.StopContinueCt();
-        AdManager.instance.AdShow("rewardedVideo",() => StartLevel(chairIndex));
+        AdManager.instance.AdShow(() => StartLevel(chairIndex), "rewardedVideo");
     }
 
     public void OnClickRestart()
@@ -474,7 +474,7 @@ public class GameManager : MonoBehaviour
 
 
         if (gameLostCount > 1 && gameLostCount % gameLostForAd == 0) {
-            AdManager.instance.AdShow("endgameobligatory", null , null);
+            AdManager.instance.AdShow(null, "endgameobligatory");
         }
       
         StartCoroutine(RestartGame(3));
@@ -500,7 +500,7 @@ public class GameManager : MonoBehaviour
         CreateChairs(elipse, chairIndex);
         CreateCenter();
         
-        playersSpawner.SpawnAll(elipse, waypointsSize);
+        playersSpawner.SpawnAll(elipse, chairs.Count +1, waypointsSize); 
         musicPlayer.StartMusic();
 
         gameEnded = false;

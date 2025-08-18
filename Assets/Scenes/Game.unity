@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641275, b: 0.5748172, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641258, b: 0.5748172, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1856,7 +1856,6 @@ MonoBehaviour:
   sitButton: {fileID: 1489633553}
   sitAutoButton: {fileID: 1612941983}
   player: {fileID: 0}
-  character: {fileID: 0}
 --- !u!1 &341606611
 GameObject:
   m_ObjectHideFlags: 0
@@ -3635,7 +3634,7 @@ MonoBehaviour:
   elipseAmount: 30
   startChairIndex: 10
   chairsSizeFixed: 1
-  chairPrefab: {fileID: 1120913736871466, guid: bc66c9ef4d1255244a10c41392a32c6c,
+  chairBase: {fileID: 4231795089733975744, guid: 89bf75fab4380f64594ae4faaaf82c8e,
     type: 3}
   bananaPrefab: {fileID: 1433108987990424, guid: da79b0a9132b0a5448150b4b1fd1d951,
     type: 3}
@@ -3655,7 +3654,6 @@ MonoBehaviour:
   moneyEarned: 0
   gameLostCount: 0
   gameLostForAd: 2
-  chair: {fileID: 4231795089733975744, guid: 89bf75fab4380f64594ae4faaaf82c8e, type: 3}
   player: {fileID: 11400000, guid: e0e2aee7776049243a21d4606db9017c, type: 2}
   background: {fileID: 11400000, guid: f5cff9c50b689814a9d32d1b11547cdb, type: 2}
   visualBackground: {fileID: 0}
@@ -9797,7 +9795,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3882d531ab90c7844b3942886426a411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawn: {fileID: 733225729}
   playerPrefab: {fileID: 1627860724425774, guid: 969b4a751f13af947985b8357360cd49,
     type: 3}
   otherPrefab: {fileID: 1697394408536324, guid: dd1e35648fc14f048801d6fa02dad58d,
@@ -9816,8 +9813,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6aafe3839c781f547959a607ca27b32d, type: 2}
   - {fileID: 11400000, guid: 20ef348251c69ae49b360eb97c1406f3, type: 2}
   survivors: []
-  amountChairs: 0
-  freq: 2
 --- !u!1 &1797759500
 GameObject:
   m_ObjectHideFlags: 0
