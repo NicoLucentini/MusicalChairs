@@ -9,7 +9,7 @@ public enum GameState
 {
     STARTED_MUSIC_RUNNING,
     STARTED_MUSIC_STOPPED,
-    ENDED,
+    ENDED
 }
 public class GameManager : MonoBehaviour
 {
@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviour
     public ShopManager shopManager;
     public UIController uiController;
     public Profile profile;
+    public ElipseRenderer elipseRenderer;
 
 
     [Header("Settings")]
@@ -51,7 +52,6 @@ public class GameManager : MonoBehaviour
     public bool chairsSizeFixed = true;
     public GameObject chairBase;
     [Header("Bananas")]
-    //MAKE IT OBSOLETE
     public GameObject bananaPrefab;
     public int bananaCount;
 
@@ -61,8 +61,6 @@ public class GameManager : MonoBehaviour
 
 
     [Header("Game Status")]
-    public bool gameRunning = true; // si el juego esta andando con la musica
-    public bool gameEnded = false; //cuando el juego termina
     public bool isPaused = false;
     private int chairIndex = 10;
     public GameState state;
@@ -74,7 +72,6 @@ public class GameManager : MonoBehaviour
 
     public int moneyEarned = 0;
 
-    bool won = false;
 
     [Header("Ad")]
     [SerializeField] private int gameLostCount = 0;
@@ -285,7 +282,7 @@ public class GameManager : MonoBehaviour
             }
         }
         
-        FindObjectOfType<ElipseRenderer>().DrawElipse(e, elipseAmount, waypointsSize);
+        elipseRenderer.DrawElipse(e, elipseAmount, waypointsSize);
 
     }
 
@@ -304,9 +301,6 @@ public class GameManager : MonoBehaviour
 
     void OnMusicStopped()
     {
-        if (!gameRunning) return;
-
-        gameRunning = false;
         state = GameState.STARTED_MUSIC_STOPPED;
         RemoveAllBananas();
         Invoke("DestroyBadPlayers", 5f);
@@ -349,7 +343,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (!gameEnded)
+        if (state == GameState.STARTED_MUSIC_STOPPED)
             StartNewLevel();
     }
 
@@ -413,7 +407,6 @@ public class GameManager : MonoBehaviour
     {
         gameLostCount++;
 
-        won = false;
         
         guiManager.ChangeEndText(true, "¡Better Luck Next Time!", 1, continueClicked, true, !continueClicked);
         guiManager.Continue();
@@ -433,7 +426,6 @@ public class GameManager : MonoBehaviour
 
     private void OnGameWon()
     {
-        won = true;
         int reward = RewardTable.GetScore(chairIndex);
         moneyEarned += reward;
         guiManager.OnGameWon();
@@ -500,9 +492,6 @@ public class GameManager : MonoBehaviour
         
         playersSpawner.SpawnAll(elipse, chairs.Count +1, waypointsSize); 
         musicPlayer.StartMusic();
-
-        gameEnded = false;
-        gameRunning = true;
         state = GameState.STARTED_MUSIC_RUNNING;
     }
     
@@ -519,8 +508,6 @@ public class GameManager : MonoBehaviour
         StopAllCoroutines();
         CancelInvoke("DestroyBadPlayers");
         RemoveThings();
-        gameRunning = false;
-        gameEnded = true;
         playersSpawner.survivors.Clear();
         playersSpawner.Cancel();
         musicPlayer.StopMusic();

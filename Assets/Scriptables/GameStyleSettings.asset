@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa9d191fd7c8ef14ab44ffae101b38bc, type: 3}
   m_Name: GameStyleSettings
   m_EditorClassIdentifier: 
-  primaryFont: {r: 1, g: 1, b: 1, a: 1}
+  primaryFont: {r: 0.6415094, g: 0.6415094, b: 0.6415094, a: 1}
   secondaryFont: {r: 1, g: 1, b: 1, a: 1}
-  primaryColor: {r: 0.3019608, g: 0.9450981, b: 0, a: 1}
-  secondaryColor: {r: 1, g: 0.68235296, b: 0, a: 1}
-  thirdColor: {r: 0.2627451, g: 0.7294118, b: 0.9294118, a: 1}
+  primaryColor: {r: 0.31492433, g: 0.6981132, b: 0.13501245, a: 1}
+  secondaryColor: {r: 1, g: 0.5, b: 0, a: 1}
+  thirdColor: {r: 0, g: 1, b: 1, a: 1}

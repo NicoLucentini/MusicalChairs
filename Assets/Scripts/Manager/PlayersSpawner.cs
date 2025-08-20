@@ -45,7 +45,6 @@ public class PlayersSpawner : MonoBehaviour {
         int playerPos = Random.Range(0, amount);
 
         GameObject go = null;
-        BaseEntity be = null;
 
         int survCount = survivors.Count;
         int survIndex = 0;
@@ -60,11 +59,11 @@ public class PlayersSpawner : MonoBehaviour {
             {
                 go = GameObject.Instantiate(playerPrefab, new Vector3(pos.x, 0, pos.y), Quaternion.identity);              
                 go.name = "Player " + i;
-                
-                BaseEntity ch = go.GetComponent<BaseEntity>();
+
+                Entity ch = go.GetComponent<Entity>();
                 Debug.Log(ch == null);
                 ch.ApplySettings(GetMainCharacterSetting());
-                GameManager.instance.uiController.SetPlayer(ch);
+                ch.isHuman = true;
 
             }
             else

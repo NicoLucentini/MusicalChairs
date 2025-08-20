@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 public class UIController : MonoBehaviour
 {
@@ -12,58 +10,34 @@ public class UIController : MonoBehaviour
     public Button sitButton;
     public Button sitAutoButton;
 
-    [Header("Runtime Set")]
-    public BaseEntity player;
+
+    public static System.Action OnClickSit;
+    public static System.Action OnClickLeft;
+    public static System.Action OnClickRight;
+    public static System.Action OnClickJump;
 
     private void OnEnable()
     {
         MusicPlayer.onMusicStopped += StopAllCoroutines;
     }
 
-    public void SetPlayer(BaseEntity player)
-    {
-        this.player = player;
-    }
 
     public void Sit()
     {
-        StopAllCoroutines();
-        if(player!= null)
-            player.OnClickSit();
+        OnClickSit?.Invoke();
     }
     
     public void LeftDown()
     {
-        StopAllCoroutines();
-        if (player != null)
-            StartCoroutine(CT(player.Desaccelerate));
-    }
-    public void AnyUp()
-    {
-        StopAllCoroutines();
-        if (player != null)
-            player.Release();
+        OnClickLeft?.Invoke();
     }
     public void RightDown()
     {
-        StopAllCoroutines();
-        if (player)
-            StartCoroutine(CT(player.Accelerate));
+        OnClickRight?.Invoke();
     }
 
     public void Jump()
     {
-        StopAllCoroutines();
-        if (player)
-            player.Jump();
-    }
-
-    IEnumerator CT(System.Action func)
-    {
-        while (true)
-        {
-            func();
-            yield return new WaitForEndOfFrame();
-        }
+        OnClickJump?.Invoke();
     }
 }

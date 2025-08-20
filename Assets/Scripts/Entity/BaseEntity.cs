@@ -19,7 +19,6 @@ public class BaseEntity : Entity
     [Header("References")]
 
     [SerializeField]private GameObject baseVisual;
-    private Animation anim;
     private Rigidbody rb;
     private Collider myCollider;
     private NavMeshAgent agent;
@@ -27,11 +26,6 @@ public class BaseEntity : Entity
     [Header("Sit")]
     [ReadOnly] public Chair targetChair;
     
-    [Header("Custom Properties")]
-    public EntitySettings settings;
-
-    [Header("Properties")]
-    public bool isHuman;
 
     [Header("Movement")]
 
@@ -106,6 +100,13 @@ public class BaseEntity : Entity
         MusicPlayer.onMusicStopped += OnMusicStopped;
         Chair.onChairOccuped += OnChairOccuped;
         Banana.onGetHit += OnBananaHit;
+        if (isHuman)
+        {
+            UIController.OnClickSit += OnClickSit;
+            UIController.OnClickLeft += Desaccelerate;
+            UIController.OnClickRight += Accelerate;
+            UIController.OnClickJump += Jump;
+        }
     }
    
     private void OnDestroy()
@@ -114,6 +115,14 @@ public class BaseEntity : Entity
         GameManager.allChairsOccuped -= AllChairsOccuped;
         MusicPlayer.onMusicStopped -= OnMusicStopped;
         Banana.onGetHit -= OnBananaHit;
+        if (isHuman)
+        {
+            UIController.OnClickSit -= OnClickSit;
+            UIController.OnClickLeft -= Desaccelerate;
+            UIController.OnClickRight -= Accelerate;
+            UIController.OnClickJump -= Jump;
+        }
+
     }
 
     public bool IsSeated() => state == EntityState.SEATED;
@@ -133,13 +142,7 @@ public class BaseEntity : Entity
         }
     } 
     
-    public void ApplySettings(EntitySettings settings)
-    {
-        this.settings = settings;
-        
-        GameObject go = Instantiate(settings.prefab, transform);
-        anim = go.GetComponent<Animation>();
-    }
+   
 
 
     Transform GetClosestAndAheadWaypoint()
@@ -439,7 +442,7 @@ public class BaseEntity : Entity
             triesToJump = false;
     }
 
-    public void Jump()
+    public override void Jump()
     {
         Debug.Log("TryJump");
         if (onAir || onFloor || state != EntityState.WALKING || !MusicPlayer.isRunning) return;
@@ -598,7 +601,7 @@ public class BaseEntity : Entity
         Sit();
     }
 
-    void Sit()
+    public override void Sit()
     {
         Debug.Log($"Sit {gameObject.name}");
         
@@ -626,19 +629,21 @@ public class BaseEntity : Entity
 
         if (distanceToChair < .5f)
         {
+            /*
             if (isHuman && GameManager.instance.gameRunning)
             {
                 StartCoroutine(CTTime(.5f, GameManager.instance.OnGameLose));
             }
+            */
             SitOnChair();
         }
     }
     private void SitOnChair()
     {
-        targetChair.Set(this);
         GameManager.allChairsOccuped -= AllChairsOccuped;
         Chair.onChairOccuped -= OnChairOccuped;
-        
+
+        targetChair.Set(this);
         agent.enabled = false;
         stop = true;
         rb.mass *= 30;
@@ -694,18 +699,6 @@ public class BaseEntity : Entity
 
         Gizmos.color = Color.white;
         Gizmos.DrawSphere(toWpPos, .25f);
-
-        /*
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position + new Vector3(0, .5f, 0), transform.position + new Vector3(0, .5f, 0) + (transform.forward * slowDistance ));
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position + new Vector3(0, .5f, 0), transform.position + new Vector3(0, .5f, 0) + transform.forward * pushDistance);
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position, transform.position  + transform.forward * 1f);
-
-        */
     }
     
     //Legacy...
